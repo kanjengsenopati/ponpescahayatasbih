@@ -239,8 +239,13 @@ class OrderItemController extends Controller
             return false;
         }
 
+        if ($student->saldo <= 0) {
+            session()->flash('error', 'Maaf, Saldo Santri Rp 0 (Sudah Ditutup Buku / Dipindahkan ke SIM Baru). Tidak dapat digunakan untuk belanja.');
+            return false;
+        }
+
         if ($student->saldo < $total) {
-            session()->flash('error', 'Maaf, Saldo Santri tidak mencukupi.');
+            session()->flash('error', 'Maaf, Saldo Santri tidak mencukupi (Sisa Saldo: Rp ' . number_format($student->saldo, 0, ',', '.') . ').');
             return false;
         }
 

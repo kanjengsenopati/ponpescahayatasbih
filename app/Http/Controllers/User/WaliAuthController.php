@@ -22,14 +22,6 @@ class WaliAuthController extends Controller
     public function authenticate(AuthRequest $request)
     {
         if (Auth::guard('wali')->attempt($request->validated(), $request->remember)) {
-            // Pengecekan Kunci Akses Login Sistem (Cut-Off & Migrasi Saldo)
-            $setting = \App\Models\ApplicationSetting::first();
-            if ($setting && $setting->is_login_locked) {
-                Auth::guard('wali')->logout();
-                $msg = $setting->getLockedMessage();
-                return back()->with(['warning' => $msg])->withInput($request->only('phone'));
-            }
-
             if (Auth::guard('wali')->user()->is_active) {
                 return redirect()->route('wali.dashboard');
             } else {

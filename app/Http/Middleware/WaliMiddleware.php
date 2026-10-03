@@ -17,14 +17,6 @@ class WaliMiddleware
     public function handle($request, Closure $next)
     {
         if (Auth::guard('wali')->check()) {
-            // Pengecekan Kunci Akses Login Sistem (Cut-Off & Migrasi Saldo)
-            $setting = \App\Models\ApplicationSetting::first();
-            if ($setting && $setting->is_login_locked) {
-                Auth::guard('wali')->logout();
-                $msg = $setting->getLockedMessage();
-                return redirect()->route('wali.login')->with('warning', $msg);
-            }
-
             return $next($request);
         }
 
