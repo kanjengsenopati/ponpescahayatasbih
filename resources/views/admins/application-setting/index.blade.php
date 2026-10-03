@@ -397,7 +397,7 @@
                                                 <i class="fas fa-info-circle text-primary me-1"></i>
                                                 Aplikasi Baru tidak langsung menimpa data, melainkan menunggu konfirmasi persetujuan dari Admin di Aplikasi Baru.
                                             </span>
-                                            <button type="submit" class="btn btn-primary" onclick="return confirm('Kirim data saldo {{ number_format($totalActiveStudents ?? 0, 0, \',\', \'.\') }} santri (Total: Rp {{ number_format($totalActiveSaldo ?? 0, 0, \',\', \'.\') }}) ke Aplikasi Baru untuk ditinjau?');">
+                                            <button type="submit" class="btn btn-primary" onclick="return confirm('Kirim data saldo {{ number_format($totalActiveStudents ?? 0, 0, ',', '.') }} santri (Total: Rp {{ number_format($totalActiveSaldo ?? 0, 0, ',', '.') }}) ke Aplikasi Baru untuk ditinjau?');">
                                                 <i class="fas fa-paper-plane me-2"></i>
                                                 Kirim Data Saldo ke Aplikasi Baru
                                             </button>
