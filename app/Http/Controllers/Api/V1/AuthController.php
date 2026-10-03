@@ -34,6 +34,13 @@ class AuthController extends Controller
             return $this->failedResponse('Password salah');
         }
 
+        // Pengecekan Kunci Akses Login Sistem (Cut-Off & Migrasi Saldo)
+        $setting = \App\Models\ApplicationSetting::first();
+        if ($setting && $setting->is_login_locked) {
+            $msg = $setting->getLockedMessage();
+            return $this->failedResponse($msg);
+        }
+
         // Check if the user is active
         if (!$user->is_active) {
             return $this->failedResponse('Maaf Nih, akun kamu sedang Diblokir. Hubungi admin buat info lebih lanjut ya');

@@ -214,6 +214,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('contact', ContactController::class, ['only' => ['index', 'store']])->names('contact');
     Route::resource('application-setting', ApplicationSettingController::class, ['only' => ['index', 'store']])
         ->names('application-setting');
+    Route::post('application-setting/send-migration', [ApplicationSettingController::class, 'sendMigration'])
+        ->name('application-setting.send-migration');
 
     // start saldo history
     Route::resource('saldo-bank', SaldoBankController::class, ['only' => ['index', 'edit', 'update']])->names('saldo-bank');

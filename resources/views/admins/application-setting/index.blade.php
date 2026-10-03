@@ -242,30 +242,171 @@
                                             :value="@$applicationSetting->student_card_image ?? null" />
                                     </div>
                                 </div>
-                                <!--end::Input group-->
-                                <!--begin::Separator-->
-                                <div class="separator mb-6">
-                                </div>
-                                <!--end::Separator-->
-                                <!--begin::Action buttons-->
-                                <div class="d-flex justify-content-end">
-                                    <!--begin::Button-->
+                                <div class="separator separator-dashed my-8"></div>
 
-                                    <!--end::Button-->
-                                    <!--begin::Button-->
+                                <!--begin::Section Kunci Login-->
+                                <div class="mb-10 bg-light-danger p-6 rounded border border-danger border-dashed">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <div class="symbol symbol-40px me-4">
+                                            <span class="symbol-label bg-danger text-white">
+                                                <i class="fas fa-user-lock fs-2 text-white"></i>
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-gray-900 fw-bolder mb-1">Kunci Akses Login Sistem (Cut-Off Saldo & Migrasi)</h3>
+                                            <span class="text-muted fs-7">Gunakan fitur ini untuk membekukan transaksi agar saldo santri tidak bergerak saat proses migrasi ke aplikasi baru.</span>
+                                        </div>
+                                    </div>
+
+                                    <!--begin::Toggle Switch-->
+                                    <div class="d-flex align-items-center justify-content-between p-4 mb-6 bg-white rounded border">
+                                        <div>
+                                            <label class="fs-6 fw-bold text-gray-800" for="is_login_locked">
+                                                Aktifkan Kunci Login Sistem
+                                            </label>
+                                            <div class="text-muted fs-7">Jika aktif, kasir toko/koperasi, piket, TU, dan wali santri otomatis tidak bisa login.</div>
+                                        </div>
+                                        <div class="form-check form-switch form-check-custom form-check-danger form-check-solid">
+                                            <input class="form-check-input h-30px w-50px" type="checkbox" name="is_login_locked" id="is_login_locked" value="1"
+                                                {{ !empty($applicationSetting?->is_login_locked) ? 'checked' : '' }} />
+                                        </div>
+                                    </div>
+                                    <!--end::Toggle Switch-->
+
+                                    <!--begin::Allowed Roles-->
+                                    <div class="mb-6">
+                                        <label class="fs-6 fw-bold form-label mb-2">
+                                            <i class="fas fa-shield-alt text-primary me-1"></i>
+                                            Role yang TETAP Boleh Login Saat Dikunci:
+                                        </label>
+                                        <div class="text-muted fs-7 mb-3">Centang role staf/admin yang diberi dispensasi khusus (misal Bendahara untuk rekapitulasi data):</div>
+                                        @php
+                                            $allowedRoles = $applicationSetting?->getAllowedRoles() ?? ['SUPER ADMIN', 'Bendahara SMP', 'BENDAHARA MA'];
+                                        @endphp
+                                        <div class="row g-3 bg-white p-4 rounded border">
+                                            @foreach ($roles as $role)
+                                            <div class="col-md-4 col-sm-6">
+                                                <div class="form-check form-check-custom form-check-sm">
+                                                    <input class="form-check-input" type="checkbox" name="allowed_roles_when_locked[]"
+                                                        value="{{ $role->name }}" id="role_{{ $role->id }}"
+                                                        {{ in_array($role->name, $allowedRoles) ? 'checked' : '' }} />
+                                                    <label class="form-check-label text-gray-800 fw-bold fs-7 ms-2" for="role_{{ $role->id }}">
+                                                        {{ $role->name }}
+                                                        @if (str_contains(strtoupper($role->name), 'BENDAHARA') || str_contains(strtoupper($role->name), 'SUPER ADMIN'))
+                                                            <span class="badge badge-light-success fs-8 py-0 px-2 ms-1">Disarankan</span>
+                                                        @endif
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <!--end::Allowed Roles-->
+
+                                    <!--begin::Pesan Notifikasi Login Ditolak-->
+                                    <div class="mb-2">
+                                        <label class="fs-6 fw-bold form-label" for="login_locked_message">
+                                            <i class="fas fa-comment-alt text-warning me-1"></i>
+                                            Pesan Notifikasi Saat User Ditolak Login:
+                                        </label>
+                                        <textarea class="form-control form-control-solid" id="login_locked_message" name="login_locked_message" rows="3"
+                                            placeholder="Contoh: Mohon maaf, sistem aplikasi lama sedang ditutup sementara untuk proses migrasi data ke aplikasi baru. Silakan hubungi Bendahara.">{{ $applicationSetting?->login_locked_message ?? 'Mohon maaf, sistem aplikasi lama sedang ditutup sementara untuk proses migrasi data ke aplikasi baru. Silakan hubungi Bendahara / Administrator.' }}</textarea>
+                                        <div class="text-muted fs-8 mt-1">Pesan ini akan langsung muncul di layar ketika pengguna yang dikunci mencoba login.</div>
+                                    </div>
+                                    <!--end::Pesan Notifikasi Login Ditolak-->
+                                </div>
+                                <!--end::Section Kunci Login-->
+
+                                <!--begin::Action buttons-->
+                                <div class="d-flex justify-content-end mb-6">
                                     @if (Auth::user()->can('Edit Pengaturan Aplikasi'))
-                                    <button type="submit" data-kt-contacts-type="submit" class="btn btn-sm btn-primary">
-                                        <span class="indicator-label">Simpan</span>
+                                    <button type="submit" data-kt-contacts-type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        <span class="indicator-label">Simpan Pengaturan</span>
                                         <span class="indicator-progress">Please wait...
-                                            <span
-                                                class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                                            <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
                                     </button>
                                     @endif
-                                    <!--end::Button-->
                                 </div>
                                 <!--end::Action buttons-->
                             </form>
                             <!--end::Form-->
+
+                            <div class="separator separator-dashed my-8"></div>
+
+                            <!--begin::Section Kirim Migrasi Saldo ke Aplikasi Baru-->
+                            <div class="card bg-light-primary border border-primary border-dashed">
+                                <div class="card-body p-6">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <div class="symbol symbol-40px me-4">
+                                            <span class="symbol-label bg-primary text-white">
+                                                <i class="fas fa-paper-plane fs-2 text-white"></i>
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-gray-900 fw-bolder mb-1">Kirim Data Snapshot Saldo ke Aplikasi Baru</h3>
+                                            <span class="text-muted fs-7">Mengirimkan saldo santri aktif secara utuh ke Aplikasi Baru. Di Aplikasi Baru akan tampil ringkasan dan konfirmasi sebelum diterapkan.</span>
+                                        </div>
+                                    </div>
+
+                                    <!--begin::Stat Ringkasan-->
+                                    <div class="row g-4 mb-6">
+                                        <div class="col-md-4">
+                                            <div class="bg-white p-4 rounded border text-center">
+                                                <div class="text-muted fs-7 fw-bold">TOTAL SANTRI AKTIF</div>
+                                                <div class="fs-2x fw-bolder text-primary mt-1">{{ number_format($totalActiveStudents ?? 0, 0, ',', '.') }}</div>
+                                                <div class="text-muted fs-8">Santri Status ACTIVE</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="bg-white p-4 rounded border text-center">
+                                                <div class="text-muted fs-7 fw-bold">TOTAL SALDO ACUAN</div>
+                                                <div class="fs-2x fw-bolder text-success mt-1">Rp {{ number_format($totalActiveSaldo ?? 0, 0, ',', '.') }}</div>
+                                                <div class="text-muted fs-8">100% Sesuai Laporan Saldo Lama</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="bg-white p-4 rounded border text-center">
+                                                <div class="text-muted fs-7 fw-bold">TERAKHIR DIKIRIM</div>
+                                                <div class="fs-5 fw-bolder text-gray-800 mt-2">
+                                                    {{ !empty($applicationSetting?->last_migration_sent_at) ? \Carbon\Carbon::parse($applicationSetting->last_migration_sent_at)->translatedFormat('d M Y H:i') : 'Belum Pernah' }}
+                                                </div>
+                                                <div class="text-muted fs-8">Riwayat Kirim Migrasi</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--end::Stat Ringkasan-->
+
+                                    <form action="{{ route('application-setting.send-migration') }}" method="POST" id="form-send-migration">
+                                        @csrf
+                                        <div class="row g-4 mb-6">
+                                            <div class="col-md-8">
+                                                <label class="fs-7 fw-bold text-gray-700 form-label">URL Server Aplikasi Baru:</label>
+                                                <input type="text" class="form-control form-control-solid fs-7" name="new_app_url"
+                                                    value="{{ $applicationSetting?->new_app_url ?? 'https://sim.cahayatasbih.or.id' }}" required />
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="fs-7 fw-bold text-gray-700 form-label">Secret Token Migrasi:</label>
+                                                <input type="text" class="form-control form-control-solid fs-7" name="migration_token"
+                                                    value="{{ $applicationSetting?->migration_token ?? 'cahaya-tasbih-migration-secret' }}" required />
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted fs-7">
+                                                <i class="fas fa-info-circle text-primary me-1"></i>
+                                                Aplikasi Baru tidak langsung menimpa data, melainkan menunggu konfirmasi persetujuan dari Admin di Aplikasi Baru.
+                                            </span>
+                                            <button type="submit" class="btn btn-primary" onclick="return confirm('Kirim data saldo {{ number_format($totalActiveStudents ?? 0, 0, \',\', \'.\') }} santri (Total: Rp {{ number_format($totalActiveSaldo ?? 0, 0, \',\', \'.\') }}) ke Aplikasi Baru untuk ditinjau?');">
+                                                <i class="fas fa-paper-plane me-2"></i>
+                                                Kirim Data Saldo ke Aplikasi Baru
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <!--end::Section Kirim Migrasi Saldo-->
+
                         </div>
                         <!--end::Card body-->
                     </div>

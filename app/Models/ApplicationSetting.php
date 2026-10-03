@@ -23,7 +23,41 @@ class ApplicationSetting extends Model
         'saldo_fee',
         'target_month',
         'target_year',
+        'is_login_locked',
+        'allowed_roles_when_locked',
+        'login_locked_message',
+        'new_app_url',
+        'migration_token',
+        'last_migration_sent_at',
     ];
+
+    protected $casts = [
+        'is_login_locked' => 'boolean',
+        'allowed_roles_when_locked' => 'array',
+        'last_migration_sent_at' => 'datetime',
+    ];
+
+    public static function getLockSetting(): ?self
+    {
+        return static::first();
+    }
+
+    public function getAllowedRoles(): array
+    {
+        if (empty($this->allowed_roles_when_locked)) {
+            return ['SUPER ADMIN', 'Bendahara SMP', 'BENDAHARA MA'];
+        }
+        return is_array($this->allowed_roles_when_locked) 
+            ? $this->allowed_roles_when_locked 
+            : json_decode($this->allowed_roles_when_locked, true) ?? [];
+    }
+
+    public function getLockedMessage(): string
+    {
+        return !empty($this->login_locked_message) 
+            ? $this->login_locked_message 
+            : 'Mohon maaf, sistem aplikasi lama sedang ditutup sementara untuk proses migrasi data ke aplikasi baru. Silakan hubungi Bendahara / Administrator.';
+    }
 
     protected $appends = [
         'whatsapp_status'
