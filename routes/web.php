@@ -216,6 +216,8 @@ Route::group(['middleware' => ['auth']], function () {
         ->names('application-setting');
     Route::post('application-setting/send-migration', [ApplicationSettingController::class, 'sendMigration'])
         ->name('application-setting.send-migration');
+    Route::get('application-setting/student-data', [ApplicationSettingController::class, 'studentData'])
+        ->name('application-setting.student-data');
 
     // start saldo history
     Route::resource('saldo-bank', SaldoBankController::class, ['only' => ['index', 'edit', 'update']])->names('saldo-bank');

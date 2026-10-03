@@ -375,7 +375,35 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!--end::Stat Ringkasan-->
+                                    <!--begin::Tabel Rincian Santri-->
+                                    <div class="card card-flush bg-white border mb-6">
+                                        <div class="card-header pt-4 pb-2">
+                                            <div class="card-title">
+                                                <h4 class="fw-bolder text-gray-800">
+                                                    <i class="fas fa-list-alt text-primary me-2"></i>
+                                                    Rincian Data Seluruh Santri yang Akan Dikirim ({{ number_format($totalActiveStudents ?? 0, 0, ',', '.') }} Santri)
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <div class="card-body pt-0">
+                                            <div class="table-responsive">
+                                                <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-3 fs-7" id="table-migration-preview">
+                                                    <thead>
+                                                        <tr class="fw-bolder text-muted bg-light">
+                                                            <th class="ps-4 min-w-40px">NO</th>
+                                                            <th class="min-w-100px">NIS</th>
+                                                            <th class="min-w-180px">NAMA SANTRI</th>
+                                                            <th class="min-w-90px">KELAS</th>
+                                                            <th class="min-w-120px text-end text-success">SALDO UTAMA</th>
+                                                            <th class="min-w-120px text-end pe-4">TABUNGAN</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--end::Tabel Rincian Santri-->
 
                                     <form action="{{ route('application-setting.send-migration') }}" method="POST" id="form-send-migration">
                                         @csrf
@@ -427,6 +455,33 @@
 <script>
     $('.time').mask('00:00', {
         reverse: true
+    });
+
+    $(document).ready(function() {
+        $('#table-migration-preview').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: "{{ route('application-setting.student-data') }}",
+            columns: [
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'ps-4' },
+                { data: 'nis', name: 'nis' },
+                { data: 'name', name: 'name', className: 'fw-bold text-gray-800' },
+                { data: 'classroom_name', name: 'classroom.name' },
+                { data: 'saldo', name: 'saldo', className: 'text-end' },
+                { data: 'saving', name: 'saving', className: 'text-end pe-4' }
+            ],
+            language: {
+                search: "Cari Santri / NIS:",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ s/d _END_ dari _TOTAL_ santri",
+                paginate: {
+                    first: "Awal",
+                    last: "Akhir",
+                    next: "Lanjut",
+                    previous: "Sebelum"
+                }
+            }
         });
+    });
 </script>
 @endpush

@@ -62,6 +62,25 @@ class ApplicationSettingController extends Controller
     }
 
     /**
+     * DataTables endpoint untuk rincian data seluruh santri dan saldonya.
+     */
+    public function studentData(Request $request)
+    {
+        $students = \App\Models\Student::with('classroom')
+            ->whereNull('deleted_at')
+            ->where('status', 'ACTIVE')
+            ->select('id', 'nis', 'name', 'classroom_id', 'saldo', 'saving');
+
+        return \Yajra\DataTables\Facades\DataTables::of($students)
+            ->addIndexColumn()
+            ->addColumn('classroom_name', fn($s) => $s->classroom?->name ?? '-')
+            ->editColumn('saldo', fn($s) => '<span class="fw-bold ' . ($s->saldo < 0 ? 'text-danger' : 'text-success') . '">Rp ' . number_format($s->saldo, 0, ',', '.') . '</span>')
+            ->editColumn('saving', fn($s) => 'Rp ' . number_format($s->saving, 0, ',', '.'))
+            ->rawColumns(['saldo'])
+            ->make(true);
+    }
+
+    /**
      * Kirim data snapshot saldo seluruh santri aktif ke Aplikasi Baru untuk ditinjau dan dikonfirmasi.
      */
     public function sendMigration(Request $request)
