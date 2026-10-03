@@ -29,12 +29,14 @@ class ApplicationSetting extends Model
         'new_app_url',
         'migration_token',
         'last_migration_sent_at',
+        'migrated_classrooms',
     ];
 
     protected $casts = [
         'is_login_locked' => 'boolean',
         'allowed_roles_when_locked' => 'array',
         'last_migration_sent_at' => 'datetime',
+        'migrated_classrooms' => 'array',
     ];
 
     public static function getLockSetting(): ?self

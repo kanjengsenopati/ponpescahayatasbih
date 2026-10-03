@@ -47,6 +47,21 @@ class ApplicationSettingController extends Controller
         $unassignedSaldo = (int) \App\Models\Student::whereNull('classroom_id')->whereNull('deleted_at')->where('status', 'ACTIVE')->sum('saldo');
         $unassignedSaving = (int) \App\Models\Student::whereNull('classroom_id')->whereNull('deleted_at')->where('status', 'ACTIVE')->sum('saving');
 
+        // Ambil ID kelas yang sudah benar-benar pernah dimigrasikan
+        $migratedClassroomIds = [];
+        if ($applicationSetting && is_array($applicationSetting->migrated_classrooms)) {
+            $migratedClassroomIds = array_keys($applicationSetting->migrated_classrooms);
+        }
+
+        $historyMigratedIds = \App\Models\SaldoHistory::where('description', 'like', '%Penutupan Buku%')
+            ->join('students', 'saldo_histories.student_id', '=', 'students.id')
+            ->whereNotNull('students.classroom_id')
+            ->pluck('students.classroom_id')
+            ->unique()
+            ->toArray();
+
+        $migratedClassroomIds = array_values(array_unique(array_merge($migratedClassroomIds, $historyMigratedIds)));
+
         return view('admins.application-setting.index', compact(
             'applicationSetting',
             'roles',
@@ -55,7 +70,8 @@ class ApplicationSettingController extends Controller
             'classrooms',
             'unassignedCount',
             'unassignedSaldo',
-            'unassignedSaving'
+            'unassignedSaving',
+            'migratedClassroomIds'
         ));
     }
 
@@ -236,7 +252,20 @@ class ApplicationSettingController extends Controller
                 });
 
                 if ($setting) {
-                    $setting->update(['last_migration_sent_at' => now()]);
+                    $currentMigrated = is_array($setting->migrated_classrooms) ? $setting->migrated_classrooms : [];
+                    $currentMigrated[$classroomId] = [
+                        'name' => $classroomName,
+                        'sent_at' => now()->toDateTimeString(),
+                        'sent_by' => Auth::user()->name,
+                        'total_students' => $totalStudents,
+                        'total_saldo' => $totalSaldo,
+                        'batch_id' => $batchId,
+                    ];
+
+                    $setting->update([
+                        'last_migration_sent_at' => now(),
+                        'migrated_classrooms' => $currentMigrated,
+                    ]);
                 }
 
                 return redirect()->route('application-setting.index')->with('success', "✅ BERHASIL! Data Kelas {$classroomName} ({$totalStudents} santri, Total Saldo: Rp " . number_format($totalSaldo, 0, ',', '.') . ") telah dikirim ke Aplikasi Baru (Batch Ref: {$batchId}) dan saldo di aplikasi lama telah resmi DITUTUP BUKU (menjadi Rp 0). Seluruh riwayat transaksi tetap tersimpan utuh dan dapat dilihat di menu Laporan Saldo.");

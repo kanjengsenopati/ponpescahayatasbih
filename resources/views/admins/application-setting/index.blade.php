@@ -445,7 +445,7 @@
                                                         @forelse ($classrooms as $index => $c)
                                                         @php
                                                             $cSaldo = (int) ($c->total_saldo ?? 0);
-                                                            $isClosed = ($cSaldo == 0);
+                                                            $isClosed = in_array((string)$c->id, $migratedClassroomIds ?? []);
                                                         @endphp
                                                         <tr>
                                                             <td class="ps-4">{{ $index + 1 }}</td>
@@ -462,11 +462,15 @@
                                                             <td class="text-center">
                                                                 @if ($isClosed)
                                                                     <span class="badge badge-light-success fw-bold py-1 px-2">
-                                                                        <i class="fas fa-check-circle text-success me-1"></i> Tutup Buku (Rp 0)
+                                                                        <i class="fas fa-check-circle text-success me-1"></i> Sudah Tutup Buku
                                                                     </span>
-                                                                @else
+                                                                @elseif ($cSaldo > 0)
                                                                     <span class="badge badge-light-warning fw-bold py-1 px-2">
                                                                         <i class="fas fa-clock text-warning me-1"></i> Belum Tutup Buku
+                                                                    </span>
+                                                                @else
+                                                                    <span class="badge badge-light-info fw-bold py-1 px-2">
+                                                                        <i class="fas fa-info-circle text-info me-1"></i> Saldo Rp 0 (Belum Dimigrasi)
                                                                     </span>
                                                                 @endif
                                                             </td>
@@ -477,13 +481,13 @@
                                                                         <i class="fas fa-search me-1"></i> Rincian
                                                                     </button>
 
-                                                                    <button type="button" class="btn btn-sm {{ $isClosed ? 'btn-light-secondary' : 'btn-primary' }} py-1 px-3 btn-migrate-class"
+                                                                    <button type="button" class="btn btn-sm {{ $isClosed ? 'btn-light-secondary' : ($cSaldo > 0 ? 'btn-primary' : 'btn-light-primary') }} py-1 px-3 btn-migrate-class"
                                                                         data-class-id="{{ $c->id }}"
                                                                         data-class-name="{{ $c->name }}"
                                                                         data-students="{{ $c->students_count }}"
                                                                         data-saldo="{{ number_format($cSaldo, 0, ',', '.') }}"
                                                                         data-is-closed="{{ $isClosed ? '1' : '0' }}">
-                                                                        <i class="fas fa-paper-plane me-1"></i> {{ $isClosed ? 'Kirim Ulang' : 'Kirim & Tutup Buku' }}
+                                                                        <i class="fas fa-paper-plane me-1"></i> {{ $isClosed ? 'Kirim Ulang' : ($cSaldo > 0 ? 'Kirim & Tutup Buku' : 'Kirim Snapshot (Rp 0)') }}
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -497,7 +501,7 @@
                                                         @if (!empty($unassignedCount) && $unassignedCount > 0)
                                                         @php
                                                             $uSaldo = (int) ($unassignedSaldo ?? 0);
-                                                            $uClosed = ($uSaldo == 0);
+                                                            $uClosed = in_array('unassigned', $migratedClassroomIds ?? []);
                                                         @endphp
                                                         <tr class="bg-light-warning">
                                                             <td class="ps-4">-</td>
@@ -512,11 +516,15 @@
                                                             <td class="text-center">
                                                                 @if ($uClosed)
                                                                     <span class="badge badge-light-success fw-bold py-1 px-2">
-                                                                        <i class="fas fa-check-circle text-success me-1"></i> Tutup Buku (Rp 0)
+                                                                        <i class="fas fa-check-circle text-success me-1"></i> Sudah Tutup Buku
                                                                     </span>
-                                                                @else
+                                                                @elseif ($uSaldo > 0)
                                                                     <span class="badge badge-light-warning fw-bold py-1 px-2">
                                                                         <i class="fas fa-clock text-warning me-1"></i> Belum Tutup Buku
+                                                                    </span>
+                                                                @else
+                                                                    <span class="badge badge-light-info fw-bold py-1 px-2">
+                                                                        <i class="fas fa-info-circle text-info me-1"></i> Saldo Rp 0 (Belum Dimigrasi)
                                                                     </span>
                                                                 @endif
                                                             </td>
@@ -526,13 +534,13 @@
                                                                         data-class-id="unassigned" data-class-name="Tanpa Kelas">
                                                                         <i class="fas fa-search me-1"></i> Rincian
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm {{ $uClosed ? 'btn-light-secondary' : 'btn-primary' }} py-1 px-3 btn-migrate-class"
+                                                                    <button type="button" class="btn btn-sm {{ $uClosed ? 'btn-light-secondary' : ($uSaldo > 0 ? 'btn-primary' : 'btn-light-primary') }} py-1 px-3 btn-migrate-class"
                                                                         data-class-id="unassigned"
                                                                         data-class-name="Tanpa Kelas"
                                                                         data-students="{{ $unassignedCount }}"
                                                                         data-saldo="{{ number_format($uSaldo, 0, ',', '.') }}"
                                                                         data-is-closed="{{ $uClosed ? '1' : '0' }}">
-                                                                        <i class="fas fa-paper-plane me-1"></i> {{ $uClosed ? 'Kirim Ulang' : 'Kirim & Tutup Buku' }}
+                                                                        <i class="fas fa-paper-plane me-1"></i> {{ $uClosed ? 'Kirim Ulang' : ($uSaldo > 0 ? 'Kirim & Tutup Buku' : 'Kirim Snapshot (Rp 0)') }}
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -679,16 +687,19 @@
                       "Jumlah Santri: " + students + " Santri\n" +
                       "Total Saldo: Rp " + saldo + "\n\n";
 
-            if (!isClosed) {
+            if (isClosed) {
+                msg += "Kelas ini sebelumnya SUDAH PERNAH ditutup buku (dimigrasikan).\n" +
+                       "Apakah Anda ingin mengirim ulang data snapshot kelas " + className + " ke Aplikasi Baru?";
+            } else if (saldo == "0") {
+                msg += "Santri di kelas ini memiliki total saldo Rp 0.\n" +
+                       "Kirim data santri kelas " + className + " ke Aplikasi Baru agar terdaftar di SIM Baru?";
+            } else {
                 msg += "PERHATIAN:\n" +
                        "Setelah data kelas ini dikirim ke Aplikasi Baru:\n" +
                        "1. Saldo santri kelas ini di aplikasi lama OTOMATIS MENJADI RP 0 (TUTUP BUKU).\n" +
                        "2. Riwayat mutasi lama TETAP AMAN dan bisa dilihat di Laporan Saldo.\n" +
                        "3. Di Aplikasi Baru saldo akan menunggu konfirmasi persetujuan dari Admin.\n\n" +
                        "Apakah Anda yakin ingin memproses Tutup Buku kelas " + className + "?";
-            } else {
-                msg += "Kelas ini sebelumnya sudah ditutup buku (Saldo Rp 0).\n" +
-                       "Apakah Anda ingin mengirim ulang data snapshot kelas " + className + " ke Aplikasi Baru?";
             }
 
             if (confirm(msg)) {
