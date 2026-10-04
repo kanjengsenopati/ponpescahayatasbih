@@ -268,7 +268,7 @@ class MigrationSaldoController extends Controller
         ]);
 
         $setting = ApplicationSetting::first();
-        $targetUrl = rtrim($request->input('new_app_url', $setting?->new_app_url ?: 'https://sim.cahayatasbih.or.id'), '/');
+        $targetUrl = rtrim($request->input('new_app_url', $setting?->new_app_url ?: 'https://aplikasi.cahayatasbih.or.id'), '/');
         $token = $request->input('migration_token', $setting?->migration_token ?: 'cahaya-tasbih-migration-secret');
 
         if ($setting) {
@@ -399,7 +399,7 @@ class MigrationSaldoController extends Controller
     {
         $classroomId = $request->input('classroom_id');
         $setting = ApplicationSetting::first();
-        $targetUrl = rtrim($request->input('new_app_url') ?: ($setting?->new_app_url ?: 'https://sim.cahayatasbih.or.id'), '/');
+        $targetUrl = rtrim($request->input('new_app_url') ?: ($setting?->new_app_url ?: 'https://aplikasi.cahayatasbih.or.id'), '/');
         $token = $request->input('migration_token') ?: ($setting?->migration_token ?: 'cahaya-tasbih-migration-secret');
 
         if ($classroomId === 'unassigned') {
