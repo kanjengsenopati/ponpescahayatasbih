@@ -58,6 +58,8 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'api_key' => env('API_KEY'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
