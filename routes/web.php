@@ -74,6 +74,7 @@ use App\Http\Controllers\Admin\ReportTransactionController;
 use App\Http\Controllers\Admin\StudentGraduationController;
 use App\Http\Controllers\Admin\SubMenuNavigationController;
 use App\Http\Controllers\Admin\ApplicationSettingController;
+use App\Http\Controllers\Admin\MigrationSaldoController;
 use App\Http\Controllers\Admin\StudentAchievementController;
 use App\Http\Controllers\Admin\InformationCategoryController;
 use App\Http\Controllers\User\WaliSettingLimitSaldoController;
@@ -214,14 +215,17 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('contact', ContactController::class, ['only' => ['index', 'store']])->names('contact');
     Route::resource('application-setting', ApplicationSettingController::class, ['only' => ['index', 'store']])
         ->names('application-setting');
-    Route::post('application-setting/send-migration', [ApplicationSettingController::class, 'sendMigration'])
-        ->name('application-setting.send-migration');
-    Route::post('application-setting/reverse-migration', [ApplicationSettingController::class, 'reverseMigration'])
-        ->name('application-setting.reverse-migration');
-    Route::get('application-setting/student-data', [ApplicationSettingController::class, 'studentData'])
-        ->name('application-setting.student-data');
-    Route::get('application-setting/classroom-students', [ApplicationSettingController::class, 'classroomStudents'])
-        ->name('application-setting.classroom-students');
+
+    // Submenu Migrasi Saldo
+    Route::prefix('migration-saldo')->name('migration-saldo.')->group(function () {
+        Route::get('/', [MigrationSaldoController::class, 'index'])->name('index');
+        Route::post('/save-settings', [MigrationSaldoController::class, 'saveSettings'])->name('save-settings');
+        Route::post('/send-migration', [MigrationSaldoController::class, 'sendMigration'])->name('send-migration');
+        Route::post('/reverse-migration', [MigrationSaldoController::class, 'reverseMigration'])->name('reverse-migration');
+        Route::get('/student-data', [MigrationSaldoController::class, 'studentData'])->name('student-data');
+        Route::get('/classroom-students', [MigrationSaldoController::class, 'classroomStudents'])->name('classroom-students');
+        Route::get('/student-mutations', [MigrationSaldoController::class, 'studentMutations'])->name('student-mutations');
+    });
 
     // start saldo history
     Route::resource('saldo-bank', SaldoBankController::class, ['only' => ['index', 'edit', 'update']])->names('saldo-bank');
