@@ -27,22 +27,7 @@ class ValidateApiKey
             ], 401);
         }
 
-        // Auto logout dan blokir akses jika sistem sedang dikunci untuk migrasi
-        $setting = \App\Models\ApplicationSetting::first();
-        if ($setting && $setting->is_login_locked) {
-            $user = $request->user('api') ?: \Illuminate\Support\Facades\Auth::guard('api')->user();
-            if ($user && method_exists($user, 'token') && $user->token()) {
-                $user->token()->revoke();
-            }
-
-            return response()->json([
-                'code'    => 401,
-                'success' => false,
-                'message' => $setting->getLockedMessage(),
-            ], 401);
-        }
-
-        // Auto logout ketika user diblokir
+        // Auto logout hanya ketika user diblokir oleh admin (is_active == false)
         $user = $request->user('api') ?: \Illuminate\Support\Facades\Auth::guard('api')->user();
         if ($user) {
             if (!$user->is_active) {

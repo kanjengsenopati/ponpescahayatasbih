@@ -19,13 +19,13 @@ class WaliMiddleware
     {
         if (Auth::guard('wali')->check()) {
             $setting = ApplicationSetting::first();
-            // Jika sistem dikunci untuk migrasi, paksa auto-logout seluruh sesi wali santri
+            // Jika sistem dikunci untuk migrasi, jadikan mode Read-Only (blokir mutasi / POST)
             if ($setting && $setting->is_login_locked) {
-                Auth::guard('wali')->logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                $message = $setting->getLockedMessage();
-                return redirect()->route('wali.login')->with('warning', $message);
+                if ($request->isMethod('post') || $request->isMethod('put') || $request->isMethod('delete')) {
+                    if (!$request->routeIs('wali.logout')) {
+                        return redirect()->back()->with('error', 'Layanan transaksi dan pembayaran di aplikasi lama sedang ditutup untuk proses migrasi ke aplikasi baru (Read-Only). Anda tetap dapat melihat data.');
+                    }
+                }
             }
 
             return $next($request);
