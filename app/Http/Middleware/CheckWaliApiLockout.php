@@ -29,10 +29,12 @@ class CheckWaliApiLockout
 
             // Blokir semua aksi transaksi/pembayaran/mutasi finansial
             return response()->json([
-                'code'    => 403,
+                'code'    => 400,
+                'status'  => false,
                 'success' => false,
-                'message' => $setting->getLockedMessage() ?: 'Layanan pembayaran dan mutasi saldo di aplikasi lama sedang ditutup untuk proses migrasi ke aplikasi baru (Read-Only). Anda tetap dapat melihat data di aplikasi ini.',
-            ], 403);
+                'message' => 'Silahkan menggunakan aplikasi baru.',
+                'data'    => null,
+            ], 400);
         }
 
         return $next($request);

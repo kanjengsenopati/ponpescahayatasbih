@@ -23,7 +23,7 @@ class WaliMiddleware
             if ($setting && $setting->is_login_locked) {
                 if ($request->isMethod('post') || $request->isMethod('put') || $request->isMethod('delete')) {
                     if (!$request->routeIs('wali.logout')) {
-                        return redirect()->back()->with('error', 'Layanan transaksi dan pembayaran di aplikasi lama sedang ditutup untuk proses migrasi ke aplikasi baru (Read-Only). Anda tetap dapat melihat data.');
+                        return redirect()->back()->with('error', 'Silahkan menggunakan aplikasi baru. Layanan transaksi dan pembayaran di aplikasi lama telah ditutup.');
                     }
                 }
             }
