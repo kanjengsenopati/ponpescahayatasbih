@@ -220,6 +220,8 @@ Route::group(['middleware' => ['auth']], function () {
         ->name('application-setting.reverse-migration');
     Route::get('application-setting/student-data', [ApplicationSettingController::class, 'studentData'])
         ->name('application-setting.student-data');
+    Route::get('application-setting/classroom-students', [ApplicationSettingController::class, 'classroomStudents'])
+        ->name('application-setting.classroom-students');
 
     // start saldo history
     Route::resource('saldo-bank', SaldoBankController::class, ['only' => ['index', 'edit', 'update']])->names('saldo-bank');

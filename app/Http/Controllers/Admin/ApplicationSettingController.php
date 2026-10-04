@@ -141,6 +141,61 @@ class ApplicationSettingController extends Controller
     }
 
     /**
+     * Endpoint data santri per kelas untuk Nested Table Expandable Panel (stay di satu fokus pandangan).
+     */
+    public function classroomStudents(Request $request)
+    {
+        $classroomId = $request->input('classroom_id');
+
+        $query = \App\Models\Student::with('classroom')
+            ->whereNull('deleted_at')
+            ->where('status', 'ACTIVE')
+            ->select('id', 'nis', 'name', 'classroom_id', 'saldo', 'saving');
+
+        if ($classroomId === 'unassigned') {
+            $query->whereNull('classroom_id');
+            $className = 'Tanpa Kelas';
+            $schoolName = '-';
+        } else {
+            $classroom = \App\Models\Classroom::with('school')->find($classroomId);
+            if (!$classroom) {
+                return response()->json(['status' => 'error', 'message' => 'Kelas tidak ditemukan'], 404);
+            }
+            $className = $classroom->name;
+            $schoolName = $classroom->school?->name ?? '-';
+            $query->where('classroom_id', $classroomId);
+        }
+
+        $students = $query->orderBy('name', 'asc')->get();
+
+        $setting = ApplicationSetting::first();
+        $migratedClassroomIds = is_array($setting?->migrated_classrooms) ? array_keys($setting->migrated_classrooms) : [];
+        $isClosed = in_array((string)$classroomId, $migratedClassroomIds);
+
+        return response()->json([
+            'status' => 'success',
+            'classroom_id' => $classroomId,
+            'classroom_name' => $className,
+            'school_name' => $schoolName,
+            'is_closed' => $isClosed,
+            'total_students' => $students->count(),
+            'total_saldo' => (int) $students->sum('saldo'),
+            'total_saving' => (int) $students->sum('saving'),
+            'students' => $students->map(function ($s, $idx) use ($isClosed) {
+                return [
+                    'no' => $idx + 1,
+                    'id' => (string) $s->id,
+                    'nis' => (string) ($s->nis ?? '-'),
+                    'name' => (string) $s->name,
+                    'saldo' => (int) $s->saldo,
+                    'saving' => (int) $s->saving,
+                    'is_closed' => $isClosed || $s->saldo == 0,
+                ];
+            }),
+        ]);
+    }
+
+    /**
      * Kirim data snapshot saldo per kelas ke Aplikasi Baru dan lakukan Tutup Buku (saldo di aplikasi lama menjadi 0).
      */
     public function sendMigration(Request $request)

@@ -447,8 +447,16 @@
                                                             $cSaldo = (int) ($c->total_saldo ?? 0);
                                                             $isClosed = in_array((string)$c->id, $migratedClassroomIds ?? []);
                                                         @endphp
-                                                        <tr>
-                                                            <td class="ps-4">{{ $index + 1 }}</td>
+                                                        <tr id="row-class-{{ $c->id }}" class="classroom-main-row" data-class-id="{{ $c->id }}">
+                                                            <td class="ps-4">
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <button type="button" class="btn btn-icon btn-sm btn-light-primary w-22px h-22px rounded-circle btn-toggle-panel"
+                                                                        data-class-id="{{ $c->id }}" data-class-name="{{ $c->name }}" title="Buka/Tutup Rincian Santri">
+                                                                        <i class="fas fa-plus fs-9" id="icon-toggle-{{ $c->id }}"></i>
+                                                                    </button>
+                                                                    <span class="fw-bold">{{ $index + 1 }}</span>
+                                                                </div>
+                                                            </td>
                                                             <td>
                                                                 <span class="fw-bolder text-gray-800 fs-6">{{ $c->name }}</span>
                                                             </td>
@@ -477,8 +485,9 @@
                                                             <td class="text-center pe-4">
                                                                 <div class="d-flex justify-content-center gap-2">
                                                                     <button type="button" class="btn btn-sm btn-light-info py-1 px-3 btn-filter-class"
-                                                                        data-class-id="{{ $c->id }}" data-class-name="{{ $c->name }}" title="Lihat daftar santri kelas ini">
-                                                                        <i class="fas fa-search me-1"></i> Rincian
+                                                                        id="btn-rincian-{{ $c->id }}"
+                                                                        data-class-id="{{ $c->id }}" data-class-name="{{ $c->name }}" title="Buka Rincian Santri Kelas Ini">
+                                                                        <i class="fas fa-search me-1"></i> <span>Rincian</span>
                                                                     </button>
 
                                                                     <button type="button" class="btn btn-sm {{ $isClosed ? 'btn-light-secondary' : ($cSaldo > 0 ? 'btn-primary' : 'btn-light-primary') }} py-1 px-3 btn-migrate-class"
@@ -502,6 +511,95 @@
                                                                 </div>
                                                             </td>
                                                         </tr>
+
+                                                        <!--begin::Nested Table Expandable Panel (Stay di satu fokus pandangan)-->
+                                                        <tr class="nested-expandable-row d-none" id="panel-class-{{ $c->id }}">
+                                                            <td colspan="7" class="p-0 border-0 bg-transparent">
+                                                                <div class="nested-panel-wrapper p-4 my-2 mx-3 rounded bg-light-primary border border-primary border-dashed shadow-sm">
+                                                                    <!-- Header bar matching Image 2 -->
+                                                                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-gray-300">
+                                                                        <div class="d-flex align-items-center gap-3">
+                                                                            <span class="bullet bg-primary w-10px h-10px rounded-circle"></span>
+                                                                            <span class="fs-6 fw-bolder text-gray-800">Rincian Santri & Saldo Kelas {{ $c->name }} ({{ number_format($c->students_count) }} Santri)</span>
+                                                                            <span class="badge badge-light-primary fw-bold px-3 py-1 fs-8">{{ $c->school?->name ?? 'Madrasah' }}</span>
+                                                                            @if ($isClosed)
+                                                                                <span class="badge badge-light-success fw-bold py-1 px-2 fs-8"><i class="fas fa-check-circle text-success me-1"></i> Sudah Tutup Buku</span>
+                                                                            @elseif ($cSaldo > 0)
+                                                                                <span class="badge badge-light-warning fw-bold py-1 px-2 fs-8"><i class="fas fa-clock text-warning me-1"></i> Belum Tutup Buku</span>
+                                                                            @else
+                                                                                <span class="badge badge-light-info fw-bold py-1 px-2 fs-8"><i class="fas fa-info-circle text-info me-1"></i> Saldo Rp 0</span>
+                                                                            @endif
+                                                                        </div>
+                                                                        <div class="d-flex align-items-center gap-2">
+                                                                            <span class="fs-7 fw-bold text-gray-500 text-uppercase tracking-wider">Total Saldo Kelas:</span>
+                                                                            <span class="fs-6 fw-bolder text-success">Rp {{ number_format($cSaldo, 0, ',', '.') }}</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <!-- Search & Filter Bar inside Panel -->
+                                                                    <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
+                                                                        <div class="position-relative w-300px">
+                                                                            <input type="text" class="form-control form-control-sm form-control-solid ps-9 fs-7 input-search-inner"
+                                                                                data-target="inner-tbody-{{ $c->id }}" placeholder="Cari nama santri / NIS di kelas ini..." />
+                                                                            <span class="position-absolute top-50 translate-middle-y ms-3 text-gray-400">
+                                                                                <i class="fas fa-search fs-8"></i>
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="text-muted fs-8">
+                                                                            <i class="fas fa-info-circle text-primary me-1"></i> Menampilkan seluruh santri aktif dalam kelas ini
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <!-- Inner Table Container -->
+                                                                    <div class="bg-white rounded border shadow-xs table-responsive" style="max-height: 380px; overflow-y: auto;">
+                                                                        <table class="table table-sm table-row-dashed align-middle mb-0 gs-3 gy-2 fs-7">
+                                                                            <thead class="bg-light sticky-top">
+                                                                                <tr class="text-gray-400 fw-bold fs-8 text-uppercase tracking-widest border-bottom">
+                                                                                    <th class="ps-3" style="width: 5%">#</th>
+                                                                                    <th style="width: 20%">NIS</th>
+                                                                                    <th style="width: 45%">NAMA SANTRI</th>
+                                                                                    <th class="text-end" style="width: 15%">SALDO UTAMA</th>
+                                                                                    <th class="text-center pe-3" style="width: 15%">STATUS BUKU</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody id="inner-tbody-{{ $c->id }}" data-loaded="0">
+                                                                                <tr>
+                                                                                    <td colspan="5" class="text-center py-4 text-muted">
+                                                                                        <i class="fas fa-spinner fa-spin me-2 text-primary fs-5"></i> Memuat data santri kelas {{ $c->name }}...
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+
+                                                                    <!-- Footer of Expandable Panel with Quick Actions -->
+                                                                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-gray-200">
+                                                                        <button type="button" class="btn btn-sm btn-light btn-close-panel" data-class-id="{{ $c->id }}">
+                                                                            <i class="fas fa-chevron-up me-1"></i> Sembunyikan Rincian
+                                                                        </button>
+                                                                        <div class="d-flex gap-2">
+                                                                            <button type="button" class="btn btn-sm {{ $isClosed ? 'btn-light-secondary' : ($cSaldo > 0 ? 'btn-primary' : 'btn-light-primary') }} py-1 px-3 btn-migrate-class"
+                                                                                data-class-id="{{ $c->id }}"
+                                                                                data-class-name="{{ $c->name }}"
+                                                                                data-students="{{ $c->students_count }}"
+                                                                                data-saldo="{{ number_format($cSaldo, 0, ',', '.') }}"
+                                                                                data-is-closed="{{ $isClosed ? '1' : '0' }}">
+                                                                                <i class="fas fa-paper-plane me-1"></i> {{ $isClosed ? 'Kirim Ulang' : ($cSaldo > 0 ? 'Kirim & Tutup Buku' : 'Kirim Snapshot (Rp 0)') }}
+                                                                            </button>
+                                                                            @if ($isClosed)
+                                                                            <button type="button" class="btn btn-sm btn-light-danger py-1 px-3 btn-reverse-class"
+                                                                                data-class-id="{{ $c->id }}"
+                                                                                data-class-name="{{ $c->name }}"
+                                                                                data-students="{{ $c->students_count }}">
+                                                                                <i class="fas fa-undo-alt me-1"></i> Tarik Balik dari SIM Baru
+                                                                            </button>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <!--end::Nested Table Expandable Panel-->
                                                         @empty
                                                         <tr>
                                                             <td colspan="7" class="text-center text-muted py-4">Tidak ada data kelas dengan santri aktif.</td>
@@ -513,8 +611,16 @@
                                                             $uSaldo = (int) ($unassignedSaldo ?? 0);
                                                             $uClosed = in_array('unassigned', $migratedClassroomIds ?? []);
                                                         @endphp
-                                                        <tr class="bg-light-warning">
-                                                            <td class="ps-4">-</td>
+                                                        <tr id="row-class-unassigned" class="classroom-main-row bg-light-warning" data-class-id="unassigned">
+                                                            <td class="ps-4">
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <button type="button" class="btn btn-icon btn-sm btn-light-warning w-22px h-22px rounded-circle btn-toggle-panel"
+                                                                        data-class-id="unassigned" data-class-name="Tanpa Kelas" title="Buka/Tutup Rincian Santri">
+                                                                        <i class="fas fa-plus fs-9" id="icon-toggle-unassigned"></i>
+                                                                    </button>
+                                                                    <span class="fw-bold">-</span>
+                                                                </div>
+                                                            </td>
                                                             <td><span class="fw-bolder text-gray-800 fs-6">Tanpa Kelas (Belum Di-assign)</span></td>
                                                             <td>-</td>
                                                             <td class="text-center">
@@ -541,8 +647,9 @@
                                                             <td class="text-center pe-4">
                                                                 <div class="d-flex justify-content-center gap-2">
                                                                     <button type="button" class="btn btn-sm btn-light-info py-1 px-3 btn-filter-class"
-                                                                        data-class-id="unassigned" data-class-name="Tanpa Kelas">
-                                                                        <i class="fas fa-search me-1"></i> Rincian
+                                                                        id="btn-rincian-unassigned"
+                                                                        data-class-id="unassigned" data-class-name="Tanpa Kelas" title="Buka Rincian Santri">
+                                                                        <i class="fas fa-search me-1"></i> <span>Rincian</span>
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm {{ $uClosed ? 'btn-light-secondary' : ($uSaldo > 0 ? 'btn-primary' : 'btn-light-primary') }} py-1 px-3 btn-migrate-class"
                                                                         data-class-id="unassigned"
@@ -564,6 +671,95 @@
                                                                 </div>
                                                             </td>
                                                         </tr>
+
+                                                        <!--begin::Nested Table Expandable Panel (Tanpa Kelas)-->
+                                                        <tr class="nested-expandable-row d-none" id="panel-class-unassigned">
+                                                            <td colspan="7" class="p-0 border-0 bg-transparent">
+                                                                <div class="nested-panel-wrapper p-4 my-2 mx-3 rounded bg-light-warning border border-warning border-dashed shadow-sm">
+                                                                    <!-- Header bar matching Image 2 -->
+                                                                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-gray-300">
+                                                                        <div class="d-flex align-items-center gap-3">
+                                                                            <span class="bullet bg-warning w-10px h-10px rounded-circle"></span>
+                                                                            <span class="fs-6 fw-bolder text-gray-800">Rincian Santri Tanpa Kelas ({{ number_format($unassignedCount) }} Santri)</span>
+                                                                            <span class="badge badge-light-danger fw-bold px-3 py-1 fs-8">Belum Di-assign</span>
+                                                                            @if ($uClosed)
+                                                                                <span class="badge badge-light-success fw-bold py-1 px-2 fs-8"><i class="fas fa-check-circle text-success me-1"></i> Sudah Tutup Buku</span>
+                                                                            @elseif ($uSaldo > 0)
+                                                                                <span class="badge badge-light-warning fw-bold py-1 px-2 fs-8"><i class="fas fa-clock text-warning me-1"></i> Belum Tutup Buku</span>
+                                                                            @else
+                                                                                <span class="badge badge-light-info fw-bold py-1 px-2 fs-8"><i class="fas fa-info-circle text-info me-1"></i> Saldo Rp 0</span>
+                                                                            @endif
+                                                                        </div>
+                                                                        <div class="d-flex align-items-center gap-2">
+                                                                            <span class="fs-7 fw-bold text-gray-500 text-uppercase tracking-wider">Total Saldo:</span>
+                                                                            <span class="fs-6 fw-bolder text-success">Rp {{ number_format($uSaldo, 0, ',', '.') }}</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <!-- Search & Filter Bar inside Panel -->
+                                                                    <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
+                                                                        <div class="position-relative w-300px">
+                                                                            <input type="text" class="form-control form-control-sm form-control-solid ps-9 fs-7 input-search-inner"
+                                                                                data-target="inner-tbody-unassigned" placeholder="Cari nama santri / NIS..." />
+                                                                            <span class="position-absolute top-50 translate-middle-y ms-3 text-gray-400">
+                                                                                <i class="fas fa-search fs-8"></i>
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="text-muted fs-8">
+                                                                            <i class="fas fa-info-circle text-warning me-1"></i> Menampilkan seluruh santri aktif tanpa kelas
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <!-- Inner Table Container -->
+                                                                    <div class="bg-white rounded border shadow-xs table-responsive" style="max-height: 380px; overflow-y: auto;">
+                                                                        <table class="table table-sm table-row-dashed align-middle mb-0 gs-3 gy-2 fs-7">
+                                                                            <thead class="bg-light sticky-top">
+                                                                                <tr class="text-gray-400 fw-bold fs-8 text-uppercase tracking-widest border-bottom">
+                                                                                    <th class="ps-3" style="width: 5%">#</th>
+                                                                                    <th style="width: 20%">NIS</th>
+                                                                                    <th style="width: 45%">NAMA SANTRI</th>
+                                                                                    <th class="text-end" style="width: 15%">SALDO UTAMA</th>
+                                                                                    <th class="text-center pe-3" style="width: 15%">STATUS BUKU</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody id="inner-tbody-unassigned" data-loaded="0">
+                                                                                <tr>
+                                                                                    <td colspan="5" class="text-center py-4 text-muted">
+                                                                                        <i class="fas fa-spinner fa-spin me-2 text-warning fs-5"></i> Memuat data santri tanpa kelas...
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+
+                                                                    <!-- Footer of Expandable Panel with Quick Actions -->
+                                                                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-gray-200">
+                                                                        <button type="button" class="btn btn-sm btn-light btn-close-panel" data-class-id="unassigned">
+                                                                            <i class="fas fa-chevron-up me-1"></i> Sembunyikan Rincian
+                                                                        </button>
+                                                                        <div class="d-flex gap-2">
+                                                                            <button type="button" class="btn btn-sm {{ $uClosed ? 'btn-light-secondary' : ($uSaldo > 0 ? 'btn-primary' : 'btn-light-primary') }} py-1 px-3 btn-migrate-class"
+                                                                                data-class-id="unassigned"
+                                                                                data-class-name="Tanpa Kelas"
+                                                                                data-students="{{ $unassignedCount }}"
+                                                                                data-saldo="{{ number_format($uSaldo, 0, ',', '.') }}"
+                                                                                data-is-closed="{{ $uClosed ? '1' : '0' }}">
+                                                                                <i class="fas fa-paper-plane me-1"></i> {{ $uClosed ? 'Kirim Ulang' : ($uSaldo > 0 ? 'Kirim & Tutup Buku' : 'Kirim Snapshot (Rp 0)') }}
+                                                                            </button>
+                                                                            @if ($uClosed)
+                                                                            <button type="button" class="btn btn-sm btn-light-danger py-1 px-3 btn-reverse-class"
+                                                                                data-class-id="unassigned"
+                                                                                data-class-name="Tanpa Kelas"
+                                                                                data-students="{{ $unassignedCount }}">
+                                                                                <i class="fas fa-undo-alt me-1"></i> Tarik Balik dari SIM Baru
+                                                                            </button>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <!--end::Nested Table Expandable Panel (Tanpa Kelas)-->
                                                         @endif
                                                     </tbody>
                                                 </table>
@@ -572,47 +768,54 @@
                                     </div>
                                     <!--end::Tabel Daftar Kelas-->
 
-                                    <!--begin::Tabel Rincian Santri-->
+                                    <!--begin::Pencarian Global Santri (Collapsible - Opsional)-->
                                     <div class="card card-flush bg-white border mb-6">
-                                        <div class="card-header pt-4 pb-2 d-flex justify-content-between align-items-center">
+                                        <div class="card-header pt-3 pb-3 d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapse-global-search">
                                             <div class="card-title">
-                                                <h4 class="fw-bolder text-gray-800">
-                                                    <i class="fas fa-users text-primary me-2"></i>
-                                                    Rincian Santri & Saldo Saat Ini
-                                                </h4>
+                                                <h5 class="fw-bolder text-gray-700 mb-0">
+                                                    <i class="fas fa-search-plus text-primary me-2"></i>
+                                                    Pencarian Global Seluruh Santri (Opsional)
+                                                </h5>
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
-                                                <label class="fs-7 fw-bold text-gray-700 me-1">Filter Kelas:</label>
-                                                <select id="filter_classroom_id" class="form-select form-select-sm form-select-solid w-200px">
-                                                    <option value="">Semua Kelas ({{ number_format($totalActiveStudents ?? 0, 0, ',', '.') }} Santri)</option>
-                                                    @foreach ($classrooms as $c)
-                                                        <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->students_count }} santri)</option>
-                                                    @endforeach
-                                                    @if (!empty($unassignedCount) && $unassignedCount > 0)
-                                                        <option value="unassigned">Tanpa Kelas ({{ $unassignedCount }} santri)</option>
-                                                    @endif
-                                                </select>
+                                                <span class="badge badge-light-primary fs-8 fw-bold">Klik untuk Membuka / Menutup</span>
                                             </div>
                                         </div>
-                                        <div class="card-body pt-0">
-                                            <div class="table-responsive">
-                                                <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-3 fs-7" id="table-migration-preview">
-                                                    <thead>
-                                                        <tr class="fw-bolder text-muted bg-light">
-                                                            <th class="ps-4 min-w-40px">NO</th>
-                                                            <th class="min-w-100px">NIS</th>
-                                                            <th class="min-w-180px">NAMA SANTRI</th>
-                                                            <th class="min-w-90px">KELAS</th>
-                                                            <th class="min-w-140px text-end text-success">SALDO UTAMA</th>
-                                                            <th class="min-w-120px text-end pe-4">TABUNGAN</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody></tbody>
-                                                </table>
+                                        <div id="collapse-global-search" class="collapse">
+                                            <div class="card-body pt-3">
+                                                <div class="d-flex justify-content-end mb-4">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <label class="fs-7 fw-bold text-gray-700 me-1">Filter Kelas:</label>
+                                                        <select id="filter_classroom_id" class="form-select form-select-sm form-select-solid w-200px">
+                                                            <option value="">Semua Kelas ({{ number_format($totalActiveStudents ?? 0, 0, ',', '.') }} Santri)</option>
+                                                            @foreach ($classrooms as $c)
+                                                                <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->students_count }} santri)</option>
+                                                            @endforeach
+                                                            @if (!empty($unassignedCount) && $unassignedCount > 0)
+                                                                <option value="unassigned">Tanpa Kelas ({{ $unassignedCount }} santri)</option>
+                                                            @endif
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-3 fs-7" id="table-migration-preview">
+                                                        <thead>
+                                                            <tr class="fw-bolder text-muted bg-light">
+                                                                <th class="ps-4 min-w-40px">NO</th>
+                                                                <th class="min-w-100px">NIS</th>
+                                                                <th class="min-w-180px">NAMA SANTRI</th>
+                                                                <th class="min-w-90px">KELAS</th>
+                                                                <th class="min-w-140px text-end text-success">SALDO UTAMA</th>
+                                                                <th class="min-w-120px text-end pe-4">TABUNGAN</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody></tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <!--end::Tabel Rincian Santri-->
+                                    <!--end::Pencarian Global Santri-->
 
                                     <!-- Hidden form for sending migration per class -->
                                     <form action="{{ route('application-setting.send-migration') }}" method="POST" id="form-send-migration" class="d-none">
@@ -650,6 +853,25 @@
 <!--end::Content-->
 <!--end::Wrapper-->
 @endsection
+
+<style>
+    .nested-panel-wrapper {
+        background-color: #f8faff !important;
+        border: 1.5px solid #b5d0ff !important;
+        box-shadow: 0 4px 15px rgba(0, 50, 150, 0.05);
+    }
+    .classroom-main-row.is-open {
+        background-color: #f1f7ff !important;
+        border-left: 4px solid #009ef7 !important;
+    }
+    .inner-students-table tbody tr:hover {
+        background-color: #f1f5f9 !important;
+    }
+    .btn-toggle-panel {
+        transition: all 0.2s ease;
+    }
+</style>
+
 @push('js')
 <script>
     $('.time').mask('00:00', {
@@ -692,13 +914,104 @@
             table.ajax.reload();
         });
 
-        // Button Filter from Classroom Table
-        $(document).on('click', '.btn-filter-class', function() {
+        // Toggle Nested Expandable Panel (stay di satu fokus pandangan)
+        function toggleClassroomPanel(classId, className) {
+            var panelRow = $('#panel-class-' + classId);
+            var mainRow = $('#row-class-' + classId);
+            var btnRincian = $('#btn-rincian-' + classId);
+            var toggleIcon = $('#icon-toggle-' + classId);
+            var btnToggle = $('.btn-toggle-panel[data-class-id="' + classId + '"]');
+
+            if (panelRow.hasClass('d-none')) {
+                // Show panel
+                panelRow.removeClass('d-none');
+                mainRow.addClass('is-open');
+                btnRincian.removeClass('btn-light-info').addClass('btn-info text-white');
+                btnRincian.find('span').text('Tutup');
+                btnRincian.find('i').removeClass('fa-search').addClass('fa-chevron-up');
+                toggleIcon.removeClass('fa-plus').addClass('fa-minus');
+                btnToggle.addClass('btn-primary text-white').removeClass('btn-light-primary btn-light-warning');
+
+                // Load data via AJAX if not loaded yet
+                var tbody = $('#inner-tbody-' + classId);
+                if (tbody.data('loaded') != '1') {
+                    $.ajax({
+                        url: "{{ route('application-setting.classroom-students') }}",
+                        type: "GET",
+                        data: { classroom_id: classId },
+                        dataType: "json",
+                        success: function(res) {
+                            if (res.status === 'success') {
+                                var html = '';
+                                if (res.students && res.students.length > 0) {
+                                    res.students.forEach(function(s, idx) {
+                                        var saldoFormatted = 'Rp ' + Number(s.saldo).toLocaleString('id-ID');
+                                        var saldoClass = s.saldo > 0 ? 'text-success fw-bolder' : (s.saldo < 0 ? 'text-danger fw-bolder' : 'text-muted fw-bold');
+                                        var statusBadge = s.is_closed 
+                                            ? '<span class="badge badge-light-success fs-9 py-1 px-2"><i class="fas fa-check-circle text-success me-1"></i> Sudah Tutup Buku</span>'
+                                            : (s.saldo > 0 
+                                                ? '<span class="badge badge-light-warning fs-9 py-1 px-2"><i class="fas fa-clock text-warning me-1"></i> Belum Tutup Buku</span>'
+                                                : '<span class="badge badge-light-info fs-9 py-1 px-2"><i class="fas fa-info-circle text-info me-1"></i> Saldo Rp 0</span>');
+
+                                        html += '<tr class="student-item-row hover-bg-light" data-search="' + (s.name + ' ' + s.nis).toLowerCase() + '">';
+                                        html += '  <td class="ps-3 text-gray-500 font-mono">' + (idx + 1) + '</td>';
+                                        html += '  <td class="font-mono text-gray-700 fw-bold">' + (s.nis || '-') + '</td>';
+                                        html += '  <td><span class="fw-bold text-gray-800">' + s.name + '</span></td>';
+                                        html += '  <td class="text-end font-mono ' + saldoClass + '">' + saldoFormatted + '</td>';
+                                        html += '  <td class="text-center pe-3">' + statusBadge + '</td>';
+                                        html += '</tr>';
+                                    });
+                                } else {
+                                    html = '<tr><td colspan="5" class="text-center py-4 text-muted fst-italic">Tidak ada santri aktif di kelas ini.</td></tr>';
+                                }
+                                tbody.html(html);
+                                tbody.data('loaded', '1');
+                            }
+                        },
+                        error: function() {
+                            tbody.html('<tr><td colspan="5" class="text-center py-4 text-danger"><i class="fas fa-exclamation-triangle me-1"></i> Gagal memuat data santri. Silakan coba lagi.</td></tr>');
+                        }
+                    });
+                }
+            } else {
+                // Hide panel
+                panelRow.addClass('d-none');
+                mainRow.removeClass('is-open');
+                btnRincian.removeClass('btn-info text-white').addClass('btn-light-info');
+                btnRincian.find('span').text('Rincian');
+                btnRincian.find('i').removeClass('fa-chevron-up').addClass('fa-search');
+                toggleIcon.removeClass('fa-minus').addClass('fa-plus');
+                btnToggle.removeClass('btn-primary text-white').addClass('btn-light-primary');
+            }
+        }
+
+        // Click handler on Rincian button or + icon
+        $(document).on('click', '.btn-filter-class, .btn-toggle-panel', function(e) {
+            e.preventDefault();
             var classId = $(this).data('class-id');
-            $('#filter_classroom_id').val(classId).trigger('change');
-            $('html, body').animate({
-                scrollTop: $('#table-migration-preview').offset().top - 120
-            }, 400);
+            var className = $(this).data('class-name');
+            toggleClassroomPanel(classId, className);
+        });
+
+        // Click handler on Sembunyikan Rincian inside panel
+        $(document).on('click', '.btn-close-panel', function(e) {
+            e.preventDefault();
+            var classId = $(this).data('class-id');
+            toggleClassroomPanel(classId);
+        });
+
+        // Live Search within inner table
+        $(document).on('keyup', '.input-search-inner', function() {
+            var q = $(this).val().toLowerCase();
+            var targetTbodyId = $(this).data('target');
+            $('#' + targetTbodyId).find('.student-item-row').each(function() {
+                var searchStr = $(this).data('search') || '';
+                if (searchStr.indexOf(q) > -1) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
         });
 
         // Button Migrate per Class
