@@ -484,12 +484,6 @@
                                                             </td>
                                                             <td class="text-center pe-4">
                                                                 <div class="d-flex justify-content-center gap-2">
-                                                                    <button type="button" class="btn btn-sm btn-light-info py-1 px-3 btn-filter-class"
-                                                                        id="btn-rincian-{{ $c->id }}"
-                                                                        data-class-id="{{ $c->id }}" data-class-name="{{ $c->name }}" title="Buka Rincian Santri Kelas Ini">
-                                                                        <i class="fas fa-search me-1"></i> <span>Rincian</span>
-                                                                    </button>
-
                                                                     <button type="button" class="btn btn-sm {{ $isClosed ? 'btn-light-secondary' : ($cSaldo > 0 ? 'btn-primary' : 'btn-light-primary') }} py-1 px-3 btn-migrate-class"
                                                                         data-class-id="{{ $c->id }}"
                                                                         data-class-name="{{ $c->name }}"
@@ -646,11 +640,6 @@
                                                             </td>
                                                             <td class="text-center pe-4">
                                                                 <div class="d-flex justify-content-center gap-2">
-                                                                    <button type="button" class="btn btn-sm btn-light-info py-1 px-3 btn-filter-class"
-                                                                        id="btn-rincian-unassigned"
-                                                                        data-class-id="unassigned" data-class-name="Tanpa Kelas" title="Buka Rincian Santri">
-                                                                        <i class="fas fa-search me-1"></i> <span>Rincian</span>
-                                                                    </button>
                                                                     <button type="button" class="btn btn-sm {{ $uClosed ? 'btn-light-secondary' : ($uSaldo > 0 ? 'btn-primary' : 'btn-light-primary') }} py-1 px-3 btn-migrate-class"
                                                                         data-class-id="unassigned"
                                                                         data-class-name="Tanpa Kelas"
@@ -860,8 +849,15 @@
         border: 1.5px solid #b5d0ff !important;
         box-shadow: 0 4px 15px rgba(0, 50, 150, 0.05);
     }
+    .classroom-main-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+    .classroom-main-row:hover {
+        background-color: #f0f6ff !important;
+    }
     .classroom-main-row.is-open {
-        background-color: #f1f7ff !important;
+        background-color: #eaf3ff !important;
         border-left: 4px solid #009ef7 !important;
     }
     .inner-students-table tbody tr:hover {
@@ -915,10 +911,9 @@
         });
 
         // Toggle Nested Expandable Panel (stay di satu fokus pandangan)
-        function toggleClassroomPanel(classId, className) {
+        function toggleClassroomPanel(classId) {
             var panelRow = $('#panel-class-' + classId);
             var mainRow = $('#row-class-' + classId);
-            var btnRincian = $('#btn-rincian-' + classId);
             var toggleIcon = $('#icon-toggle-' + classId);
             var btnToggle = $('.btn-toggle-panel[data-class-id="' + classId + '"]');
 
@@ -926,9 +921,6 @@
                 // Show panel
                 panelRow.removeClass('d-none');
                 mainRow.addClass('is-open');
-                btnRincian.removeClass('btn-light-info').addClass('btn-info text-white');
-                btnRincian.find('span').text('Tutup');
-                btnRincian.find('i').removeClass('fa-search').addClass('fa-chevron-up');
                 toggleIcon.removeClass('fa-plus').addClass('fa-minus');
                 btnToggle.addClass('btn-primary text-white').removeClass('btn-light-primary btn-light-warning');
 
@@ -977,20 +969,27 @@
                 // Hide panel
                 panelRow.addClass('d-none');
                 mainRow.removeClass('is-open');
-                btnRincian.removeClass('btn-info text-white').addClass('btn-light-info');
-                btnRincian.find('span').text('Rincian');
-                btnRincian.find('i').removeClass('fa-chevron-up').addClass('fa-search');
                 toggleIcon.removeClass('fa-minus').addClass('fa-plus');
                 btnToggle.removeClass('btn-primary text-white').addClass('btn-light-primary');
             }
         }
 
-        // Click handler on Rincian button or + icon
-        $(document).on('click', '.btn-filter-class, .btn-toggle-panel', function(e) {
-            e.preventDefault();
+        // Click handler on table row (clicking row directly reveals the panel)
+        $(document).on('click', '.classroom-main-row', function(e) {
+            // Ignore click if targeted on button, link, or input inside row
+            if ($(e.target).closest('button, a, input, select').length) {
+                return;
+            }
             var classId = $(this).data('class-id');
-            var className = $(this).data('class-name');
-            toggleClassroomPanel(classId, className);
+            toggleClassroomPanel(classId);
+        });
+
+        // Click handler on circular + button
+        $(document).on('click', '.btn-toggle-panel', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var classId = $(this).data('class-id');
+            toggleClassroomPanel(classId);
         });
 
         // Click handler on Sembunyikan Rincian inside panel
