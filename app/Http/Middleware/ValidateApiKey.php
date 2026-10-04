@@ -17,19 +17,44 @@ class ValidateApiKey
      */
     public function handle(Request $request, Closure $next)
     {
+        $apiKey = config('app.api_key', env('API_KEY'));
 
-        if (empty(env('API_KEY')) || $request->header('x-api-key') != env('API_KEY')) {
+        if (empty($apiKey) || $request->header('x-api-key') != $apiKey) {
             return response()->json([
-                'code'  => 401,
+                'code'    => 401,
                 'success' => false,
                 'message' => 'Api key is invalid !'
-            ]);
+            ], 401);
         }
 
-        //auto logout ketika user di blokir
-        if ($request->user()) {
-            if (!$request->user()->is_active) {
-                $request->user()->token()->revoke();
+        // Auto logout dan blokir akses jika sistem sedang dikunci untuk migrasi
+        $setting = \App\Models\ApplicationSetting::first();
+        if ($setting && $setting->is_login_locked) {
+            $user = $request->user('api') ?: \Illuminate\Support\Facades\Auth::guard('api')->user();
+            if ($user && method_exists($user, 'token') && $user->token()) {
+                $user->token()->revoke();
+            }
+
+            return response()->json([
+                'code'    => 401,
+                'success' => false,
+                'message' => $setting->getLockedMessage(),
+            ], 401);
+        }
+
+        // Auto logout ketika user diblokir
+        $user = $request->user('api') ?: \Illuminate\Support\Facades\Auth::guard('api')->user();
+        if ($user) {
+            if (!$user->is_active) {
+                if (method_exists($user, 'token') && $user->token()) {
+                    $user->token()->revoke();
+                }
+
+                return response()->json([
+                    'code'    => 401,
+                    'success' => false,
+                    'message' => 'Akun Anda sedang dinonaktifkan.',
+                ], 401);
             }
         }
 

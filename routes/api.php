@@ -32,7 +32,7 @@ Route::group(['prefix' => 'v1', 'middleware' => 'validate_api_key'], function ()
     });
 
 
-    Route::group(['middleware' => 'auth:api'], function () {
+    Route::group(['middleware' => ['auth:api', 'check_wali_lockout']], function () {
         Route::post('update-fcm-token', [AuthController::class, 'updateFcm']);
         Route::get('home', [HomeController::class, 'index']);
         Route::get('information', [HomeController::class, 'information']);

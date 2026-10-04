@@ -85,9 +85,14 @@
                                         <span class="text-muted fs-7">Bekukan transaksi agar saldo santri tidak bergerak selama proses migrasi.</span>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-sm btn-danger px-4 py-2">
-                                    <i class="fas fa-save me-1"></i> Simpan Pengaturan Kunci
-                                </button>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-sm btn-outline-danger bg-white px-3 py-2 btn-kick-all-wali" title="Cabut semua token mobile & sesi web wali santri">
+                                        <i class="fas fa-sign-out-alt text-danger me-1"></i> Paksa Logout Semua Wali Santri
+                                    </button>
+                                    <button type="submit" class="btn btn-sm btn-danger px-4 py-2">
+                                        <i class="fas fa-save me-1"></i> Simpan Pengaturan Kunci
+                                    </button>
+                                </div>
                             </div>
 
                             <!--begin::Toggle Switch-->
@@ -617,6 +622,11 @@
     <input type="hidden" name="migration_token" id="reverse_hidden_migration_token" />
 </form>
 
+<!-- Hidden form for kicking all wali -->
+<form action="{{ route('migration-saldo.kick-wali') }}" method="POST" id="form-kick-all-wali" class="d-none">
+    @csrf
+</form>
+
 <!--begin::Modal Riwayat Mutasi Santri-->
 <div class="modal fade" id="modal-student-mutations" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -993,6 +1003,33 @@
                     });
 
                     $('#form-reverse-migration').submit();
+                }
+            });
+        });
+
+        // Kick / Logout All Wali Santri Handler
+        $(document).on('click', '.btn-kick-all-wali', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Paksa Logout Semua Wali Santri?',
+                html: 'Tindakan ini akan <strong>mencabut seluruh sesi login web</strong> dan <strong>me-revoke semua token login aplikasi mobile</strong> untuk seluruh akun wali santri.<br><br>Sistem juga akan mengaktifkan kunci login wali santri sehingga mereka tidak dapat login kembali sampai dibuka.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#7e8299',
+                confirmButtonText: '<i class="fas fa-sign-out-alt me-1"></i> Ya, Logout Semua!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Memproses Logout Seluruh Wali...',
+                        html: 'Mencabut sesi dan token OAuth wali santri...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    $('#form-kick-all-wali').submit();
                 }
             });
         });

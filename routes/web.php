@@ -227,6 +227,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/student-data', [MigrationSaldoController::class, 'studentData'])->name('student-data');
         Route::get('/classroom-students', [MigrationSaldoController::class, 'classroomStudents'])->name('classroom-students');
         Route::get('/student-mutations', [MigrationSaldoController::class, 'studentMutations'])->name('student-mutations');
+        Route::post('/kick-wali', [MigrationSaldoController::class, 'kickWali'])->name('kick-wali');
     });
 
     // start saldo history

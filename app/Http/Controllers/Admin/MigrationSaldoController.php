@@ -108,6 +108,41 @@ class MigrationSaldoController extends Controller
     }
 
     /**
+     * Paksa logout seluruh wali santri (cabut token mobile & sesi web)
+     */
+    public function kickWali(Request $request)
+    {
+        $revokedTokens = 0;
+        if (\Illuminate\Support\Facades\Schema::hasTable('oauth_access_tokens')) {
+            $revokedTokens = DB::table('oauth_access_tokens')->where('revoked', 0)->update(['revoked' => 1]);
+            if (\Illuminate\Support\Facades\Schema::hasTable('oauth_refresh_tokens')) {
+                DB::table('oauth_refresh_tokens')->where('revoked', 0)->update(['revoked' => 1]);
+            }
+        }
+
+        $sessionPath = storage_path('framework/sessions');
+        $clearedSessions = 0;
+        if (is_dir($sessionPath)) {
+            $files = glob($sessionPath . '/*');
+            foreach ($files as $file) {
+                if (is_file($file) && basename($file) !== '.gitignore') {
+                    if (@unlink($file)) {
+                        $clearedSessions++;
+                    }
+                }
+            }
+        }
+
+        $setting = ApplicationSetting::first();
+        if ($setting) {
+            $setting->is_login_locked = true;
+            $setting->save();
+        }
+
+        return redirect()->route('migration-saldo.index')->with('success', "Seluruh wali santri berhasil di-logout otomatis ({$revokedTokens} token mobile dicabut, {$clearedSessions} sesi web browser dibersihkan).");
+    }
+
+    /**
      * Endpoint data santri per kelas untuk Nested Table Expandable Panel
      * Mengembalikan kolom ARSIP SALDO (saldo sebelum tutup buku) dan SALDO SEKARANG
      */
