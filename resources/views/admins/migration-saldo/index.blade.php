@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.master', ['title' => 'Migrasi Saldo Santri'])
 
 @section('content')
 <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
@@ -9,7 +9,7 @@
                 <span class="h-20px border-gray-200 border-start mx-4"></span>
                 <ul class="breadcrumb breadcrumb-separatorless fw-bold fs-7 my-1">
                     <li class="breadcrumb-item text-muted">
-                        <a href="{{ route('admin.dashboard.index') }}" class="text-muted text-hover-primary">Dashboard</a>
+                        <a href="{{ route('dashboard') }}" class="text-muted text-hover-primary">Dashboard</a>
                     </li>
                     <li class="breadcrumb-item">
                         <span class="bullet bg-gray-200 w-5px h-2px"></span>
@@ -602,7 +602,7 @@
 </div>
 
 <!-- Hidden form for sending migration per class -->
-<form action="{{ route('migration-saldo.send') }}" method="POST" id="form-send-migration" class="d-none">
+<form action="{{ route('migration-saldo.send-migration') }}" method="POST" id="form-send-migration" class="d-none">
     @csrf
     <input type="hidden" name="classroom_id" id="hidden_classroom_id" />
     <input type="hidden" name="new_app_url" id="hidden_new_app_url" />
@@ -610,7 +610,7 @@
 </form>
 
 <!-- Hidden form for failback / reverse migration per class -->
-<form action="{{ route('migration-saldo.reverse') }}" method="POST" id="form-reverse-migration" class="d-none">
+<form action="{{ route('migration-saldo.reverse-migration') }}" method="POST" id="form-reverse-migration" class="d-none">
     @csrf
     <input type="hidden" name="classroom_id" id="reverse_hidden_classroom_id" />
     <input type="hidden" name="new_app_url" id="reverse_hidden_new_app_url" />
