@@ -72,7 +72,7 @@
                 Aplikasi', 'Manage Kontak Bantuan', 'Manage Bank', 'Manage Pengaturan Aplikasi', 'Item Bayar',
                 'Manage Jenis Bayar'])
                 <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ request()->routeIs(['permission.*', 'role.*', 'information-category.*',
-                    'information.*', 'payment-method.*', 'application-setting.*', 'application-menu.*', 'help.*',
+                    'information.*', 'payment-method.*', 'application-setting.*', 'migration-saldo.*', 'application-menu.*', 'help.*',
                     'app-information.*', 'bill-item.*', 'bill-type.*', 'admin.*']) ? 'show' : '' }}">
                     <span class="menu-link ">
                         <span class="menu-icon">
@@ -145,6 +145,17 @@
                                     <span class="bullet bullet-dot"></span>
                                 </span>
                                 <span class="menu-title">Pengaturan Aplikasi</span>
+                            </a>
+                        </div>
+                        @endcan
+                        @can('Manage Pengaturan Aplikasi')
+                        <div class="menu-item ">
+                            <a class="menu-link {{ request()->routeIs('migration-saldo.*') ? ' active' : '' }}"
+                                href="{{ route('migration-saldo.index') }}">
+                                <span class="menu-bullet">
+                                    <span class="bullet bullet-dot"></span>
+                                </span>
+                                <span class="menu-title">Migrasi Saldo</span>
                             </a>
                         </div>
                         @endcan

@@ -242,26 +242,17 @@
                                             :value="@$applicationSetting->student_card_image ?? null" />
                                     </div>
                                 </div>
-                                <!--end::Input group-->
-                                <!--begin::Separator-->
-                                <div class="separator mb-6">
-                                </div>
-                                <!--end::Separator-->
-                                <!--begin::Action buttons-->
-                                <div class="d-flex justify-content-end">
-                                    <!--begin::Button-->
 
-                                    <!--end::Button-->
-                                    <!--begin::Button-->
+                                <!--begin::Action buttons-->
+                                <div class="d-flex justify-content-end mb-6">
                                     @if (Auth::user()->can('Edit Pengaturan Aplikasi'))
-                                    <button type="submit" data-kt-contacts-type="submit" class="btn btn-sm btn-primary">
-                                        <span class="indicator-label">Simpan</span>
+                                    <button type="submit" data-kt-contacts-type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        <span class="indicator-label">Simpan Pengaturan</span>
                                         <span class="indicator-progress">Please wait...
-                                            <span
-                                                class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                                            <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
                                     </button>
                                     @endif
-                                    <!--end::Button-->
                                 </div>
                                 <!--end::Action buttons-->
                             </form>
@@ -286,6 +277,6 @@
 <script>
     $('.time').mask('00:00', {
         reverse: true
-        });
+    });
 </script>
 @endpush

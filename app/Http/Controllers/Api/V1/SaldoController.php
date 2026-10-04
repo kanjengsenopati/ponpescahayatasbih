@@ -79,6 +79,16 @@ class SaldoController extends Controller
 
     public function topup(TopupSaldoRequest $request)
     {
+        $student = Student::find($request->student_id);
+        if ($student) {
+            $hasMigration = SaldoHistory::where('student_id', $student->id)
+                ->where('description', 'like', '%Penutupan Buku%')
+                ->exists();
+            if ($hasMigration) {
+                return $this->failedResponse('Layanan top up saldo pada aplikasi ini telah ditutup karena saldo santri telah dipindahkan ke SIM Baru. Silakan gunakan aplikasi baru.');
+            }
+        }
+
         DB::beginTransaction();
 
         try {

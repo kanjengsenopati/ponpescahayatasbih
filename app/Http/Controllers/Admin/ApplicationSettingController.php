@@ -64,7 +64,6 @@ class ApplicationSettingController extends Controller
         return 'storage/' . $imagePath;
     }
 
-
     /**
      * Display the specified resource.
      */
