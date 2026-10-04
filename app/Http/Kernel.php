@@ -73,5 +73,6 @@ class Kernel extends HttpKernel
         'optimizeImages' => \Spatie\LaravelImageOptimizer\Middlewares\OptimizeImages::class,
         'xendit' =>  \App\Http\Middleware\XenditMiddleware::class,
         'wali' => \App\Http\Middleware\WaliMiddleware::class,
+        'check_wali_lockout' => \App\Http\Middleware\CheckWaliApiLockout::class,
     ];
 }
