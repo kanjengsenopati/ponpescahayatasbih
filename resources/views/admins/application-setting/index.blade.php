@@ -489,6 +489,16 @@
                                                                         data-is-closed="{{ $isClosed ? '1' : '0' }}">
                                                                         <i class="fas fa-paper-plane me-1"></i> {{ $isClosed ? 'Kirim Ulang' : ($cSaldo > 0 ? 'Kirim & Tutup Buku' : 'Kirim Snapshot (Rp 0)') }}
                                                                     </button>
+
+                                                                    @if ($isClosed)
+                                                                    <button type="button" class="btn btn-sm btn-light-danger py-1 px-3 btn-reverse-class"
+                                                                        data-class-id="{{ $c->id }}"
+                                                                        data-class-name="{{ $c->name }}"
+                                                                        data-students="{{ $c->students_count }}"
+                                                                        title="Tarik balik saldo real-time dari SIM Baru dan buka kembali kelas">
+                                                                        <i class="fas fa-undo-alt me-1"></i> Tarik Balik
+                                                                    </button>
+                                                                    @endif
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -542,6 +552,15 @@
                                                                         data-is-closed="{{ $uClosed ? '1' : '0' }}">
                                                                         <i class="fas fa-paper-plane me-1"></i> {{ $uClosed ? 'Kirim Ulang' : ($uSaldo > 0 ? 'Kirim & Tutup Buku' : 'Kirim Snapshot (Rp 0)') }}
                                                                     </button>
+                                                                    @if ($uClosed)
+                                                                    <button type="button" class="btn btn-sm btn-light-danger py-1 px-3 btn-reverse-class"
+                                                                        data-class-id="unassigned"
+                                                                        data-class-name="Tanpa Kelas"
+                                                                        data-students="{{ $unassignedCount }}"
+                                                                        title="Tarik balik saldo real-time dari SIM Baru dan buka kembali kelas">
+                                                                        <i class="fas fa-undo-alt me-1"></i> Tarik Balik
+                                                                    </button>
+                                                                    @endif
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -601,6 +620,14 @@
                                         <input type="hidden" name="classroom_id" id="hidden_classroom_id" />
                                         <input type="hidden" name="new_app_url" id="hidden_new_app_url" />
                                         <input type="hidden" name="migration_token" id="hidden_migration_token" />
+                                    </form>
+
+                                    <!-- Hidden form for failback / reverse migration per class -->
+                                    <form action="{{ route('application-setting.reverse-migration') }}" method="POST" id="form-reverse-migration" class="d-none">
+                                        @csrf
+                                        <input type="hidden" name="classroom_id" id="reverse_hidden_classroom_id" />
+                                        <input type="hidden" name="new_app_url" id="reverse_hidden_new_app_url" />
+                                        <input type="hidden" name="migration_token" id="reverse_hidden_migration_token" />
                                     </form>
 
                                 </div>
@@ -707,6 +734,28 @@
                 $('#hidden_new_app_url').val($('#input_new_app_url').val());
                 $('#hidden_migration_token').val($('#input_migration_token').val());
                 $('#form-send-migration').submit();
+            }
+        });
+
+        // Button Reverse / Failback per Class
+        $(document).on('click', '.btn-reverse-class', function() {
+            var classId = $(this).data('class-id');
+            var className = $(this).data('class-name');
+            var students = $(this).data('students');
+
+            var msg = "⚠️ KONFIRMASI TARIK BALIK (FAILBACK) DARI SIM BARU\n\n" +
+                      "Kelas: " + className + " (" + students + " Santri)\n\n" +
+                      "Sistem akan menarik SALDO BERJALAN TERKINI dari SIM Baru (termasuk hasil transaksi jajan kantin & top up selama di SIM Baru) untuk dipulihkan ke aplikasi ini.\n\n" +
+                      "1. Saldo santri kelas ini akan diperbarui mengikuti saldo real-time SIM Baru.\n" +
+                      "2. Mutasi pemulihan saldo otomatis dicatat di riwayat transaksi.\n" +
+                      "3. Status kelas ini akan dibuka kembali.\n\n" +
+                      "Apakah Anda yakin ingin menarik balik data Kelas " + className + "?";
+
+            if (confirm(msg)) {
+                $('#reverse_hidden_classroom_id').val(classId);
+                $('#reverse_hidden_new_app_url').val($('#input_new_app_url').val());
+                $('#reverse_hidden_migration_token').val($('#input_migration_token').val());
+                $('#form-reverse-migration').submit();
             }
         });
     });

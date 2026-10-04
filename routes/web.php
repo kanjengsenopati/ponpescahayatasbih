@@ -216,6 +216,8 @@ Route::group(['middleware' => ['auth']], function () {
         ->names('application-setting');
     Route::post('application-setting/send-migration', [ApplicationSettingController::class, 'sendMigration'])
         ->name('application-setting.send-migration');
+    Route::post('application-setting/reverse-migration', [ApplicationSettingController::class, 'reverseMigration'])
+        ->name('application-setting.reverse-migration');
     Route::get('application-setting/student-data', [ApplicationSettingController::class, 'studentData'])
         ->name('application-setting.student-data');
 

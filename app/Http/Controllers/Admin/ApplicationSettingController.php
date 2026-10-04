@@ -278,6 +278,118 @@ class ApplicationSettingController extends Controller
         }
     }
 
+    /**
+     * Failback / Migrasi Balik: Mengambil saldo berjalan real-time dari Aplikasi Baru
+     * dan memulihkannya kembali ke Aplikasi Lama, lalu membuka kembali status kelas.
+     */
+    public function reverseMigration(Request $request)
+    {
+        $classroomId = $request->input('classroom_id');
+        $setting = ApplicationSetting::first();
+        $targetUrl = rtrim($request->input('new_app_url') ?: ($setting?->new_app_url ?: 'https://sim.cahayatasbih.or.id'), '/');
+        $token = $request->input('migration_token') ?: ($setting?->migration_token ?: 'cahaya-tasbih-migration-secret');
+
+        if ($classroomId === 'unassigned') {
+            $classroomName = 'Tanpa Kelas';
+            $studentsQuery = Student::whereNull('classroom_id');
+        } else {
+            $classroom = Classroom::find($classroomId);
+            if (!$classroom) {
+                return redirect()->route('application-setting.index')->with('error', 'Kelas tidak ditemukan.');
+            }
+            $classroomName = $classroom->name;
+            $studentsQuery = Student::where('classroom_id', $classroomId);
+        }
+
+        $studentsModel = $studentsQuery->get();
+        if ($studentsModel->isEmpty()) {
+            return redirect()->route('application-setting.index')->with('error', "Tidak ada santri di kelas {$classroomName} untuk dipulihkan.");
+        }
+
+        $studentNises = $studentsModel->pluck('nis')->filter()->values()->toArray();
+
+        try {
+            $endpoint = $targetUrl . '/api/internal/migration/export-current-saldo';
+            $response = Http::timeout(60)->post($endpoint, [
+                'migration_token' => $token,
+                'classroom_name' => $classroomName,
+                'student_nises' => $studentNises,
+            ]);
+
+            if (!$response->successful()) {
+                $err = $response->json()['message'] ?? $response->body() ?? 'Server Aplikasi Baru menolak permintaan';
+                return redirect()->route('application-setting.index')->with('error', "Gagal menarik saldo dari Aplikasi Baru (HTTP {$response->status()}): " . \Illuminate\Support\Str::limit($err, 150));
+            }
+
+            $resData = $response->json();
+            $newStudents = collect($resData['students'] ?? []);
+
+            if ($newStudents->isEmpty()) {
+                return redirect()->route('application-setting.index')->with('error', "Aplikasi Baru tidak menemukan data santri untuk kelas {$classroomName}.");
+            }
+
+            $studentsByKey = $studentsModel->keyBy(function ($item) {
+                return !empty($item->nis) ? (string) $item->nis : (string) $item->name;
+            });
+
+            $restoredCount = 0;
+            $totalSaldoRestored = 0;
+
+            \Illuminate\Support\Facades\DB::transaction(function () use ($newStudents, $studentsByKey, $classroomName, &$restoredCount, &$totalSaldoRestored) {
+                $now = now();
+                foreach ($newStudents as $ns) {
+                    $lookupKey = !empty($ns['nis']) ? (string) $ns['nis'] : (string) $ns['name'];
+                    $student = $studentsByKey->get($lookupKey);
+
+                    if ($student) {
+                        $currentSaldo = (int) $student->saldo;
+                        $realtimeSaldo = (int) ($ns['saldo'] ?? 0);
+                        $realtimeSaving = isset($ns['saving']) ? (int) $ns['saving'] : (int) $student->saving;
+
+                        $diff = $realtimeSaldo - $currentSaldo;
+
+                        if ($diff != 0) {
+                            \App\Models\SaldoHistory::create([
+                                'id' => (string) \Illuminate\Support\Str::uuid(),
+                                'student_id' => $student->id,
+                                'type' => $diff > 0 ? \App\Models\SaldoHistory::TYPE_IN : \App\Models\SaldoHistory::TYPE_OUT,
+                                'amount' => abs($diff),
+                                'description' => "Penyesuaian Saldo: Failback / Penarikan Saldo Berjalan dari SIM Baru (Kelas {$classroomName})",
+                                'status' => \App\Models\SaldoHistory::STATUS_SUCCESS,
+                                'usage' => \App\Models\SaldoHistory::USAGE_BILL,
+                                'balance_before' => $currentSaldo,
+                                'balance_after' => $realtimeSaldo,
+                                'created_at' => $now,
+                                'updated_at' => $now,
+                            ]);
+                        }
+
+                        $student->update([
+                            'saldo' => $realtimeSaldo,
+                            'saving' => $realtimeSaving,
+                        ]);
+
+                        $restoredCount++;
+                        $totalSaldoRestored += $realtimeSaldo;
+                    }
+                }
+            });
+
+            // Buka kembali status kelas dari catatan migrated_classrooms
+            if ($setting) {
+                $currentMigrated = is_array($setting->migrated_classrooms) ? $setting->migrated_classrooms : [];
+                unset($currentMigrated[$classroomId]);
+                $setting->update([
+                    'migrated_classrooms' => $currentMigrated,
+                ]);
+            }
+
+            return redirect()->route('application-setting.index')->with('success', "✅ BERHASIL FAILBACK! Saldo berjalan real-time dari Aplikasi Baru untuk Kelas {$classroomName} ({$restoredCount} santri, Total Saldo: Rp " . number_format($totalSaldoRestored, 0, ',', '.') . ") telah ditarik dan dipulihkan ke aplikasi ini. Riwayat transaksi telah dicatat dan kelas dibuka kembali.");
+        } catch (\Throwable $e) {
+            return redirect()->route('application-setting.index')->with('error', "Koneksi ke Aplikasi Baru gagal saat tarik balik: " . $e->getMessage());
+        }
+    }
+
     private function storeStudentCardImage($file)
     {
         $imagePath = $file->store('images/student-card', 'public');
